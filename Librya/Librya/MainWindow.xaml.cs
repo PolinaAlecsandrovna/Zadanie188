@@ -15,9 +15,7 @@ using System.Windows.Shapes;
 
 namespace Librya
 {
-    /// <summary>
-    /// Логика взаимодействия для MainWindow.xaml
-    /// </summary>
+ 
     public partial class MainWindow : Window
     {
         private List<Book> _allBooks = new List<Book>();
@@ -25,9 +23,7 @@ namespace Librya
         public MainWindow()
         {
             InitializeComponent();
-        }
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
+            
             try
             {
                 using (var db = new LibraryDBEntities())
@@ -41,7 +37,6 @@ namespace Librya
                     .Where(b => b.Genres != null && b.Genres.Name != null)
                     .Select(b => b.Genres.Name)
                     .Distinct()
-                    .Cast<string>()
                     .ToList();
 
                 genres.Insert(0, "Все жанры");
@@ -53,6 +48,7 @@ namespace Librya
                 MessageBox.Show($"Ошибка подключения к базе данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
 
         private void UpdateDataGrid()
         {
@@ -109,6 +105,5 @@ namespace Librya
         {
             UpdateDataGrid();
         }
-
     }
 }
