@@ -1,4 +1,4 @@
-﻿using Librya.Models;
+using Librya.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -65,8 +65,6 @@ namespace Librya
             {
                 MessageBox.Show($"Ошибка подключения к базе данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-
-
         }
 
         private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e)
@@ -139,14 +137,95 @@ namespace Librya
 
             DataGridBooks.ItemsSource = filteredList.ToList(); 
         }
-
-
-
-
         private void DataGridBooks_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
 
         }
+
+        private void btnUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridBooks.SelectedItem == null)
+            {
+                MessageBox.Show("Пожалуйста, выберите книгу для редактирования.", "Внимание",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            Books selectedBook = (Books)DataGridBooks.SelectedItem;
+            var editWindow = new AddEditBookWindow(db, selectedBook);
+            if (editWindow.ShowDialog() == true)
+            {
+                RefreshDataGrid();
+                UpdateGenresFilter();
+                MessageBox.Show("Книга успешно обновлена!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void btnDelete_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridBooks.SelectedItem == null)
+            {
+                MessageBox.Show("Пожалуйста, выберите книгу для удаления.", "Внимание",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            Books selectedBook = (Books)DataGridBooks.SelectedItem;
+
+            MessageBoxResult result = MessageBox.Show($"Вы уверены, что хотите удалить книгу \"{selectedBook.Title}\"?",
+                "Подтверждение удаления", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    db.Books.Remove(selectedBook);
+                    db.SaveChanges();
+                    RefreshDataGrid();
+                    UpdateGenresFilter();
+                    MessageBox.Show("Книга успешно удалена!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка при удалении: {ex.Message}", "Ошибка",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void btnAdd_Click(object sender, RoutedEventArgs e)
+        {
+            var addWindow = new AddEditBookWindow(db);
+            if (addWindow.ShowDialog() == true)
+            {
+                RefreshDataGrid();
+                UpdateGenresFilter();
+                MessageBox.Show("Книга успешно добавлена!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+        private void RefreshDataGrid()
+        {
+            _allBooks = db.Books.Include("Genres").ToList();
+            UpdateDataGrid();
+        }
+        private void UpdateGenresFilter()
+        {
+            var genres = db.Books
+                .Where(b => b.Genres != null && b.Genres.Name != null)
+                .Select(b => b.Genres.Name)
+                .Distinct()
+                .ToList();
+
+            string selectedGenre = CmbGenre.SelectedItem?.ToString();
+            genres.Insert(0, "Все жанры");
+            CmbGenre.ItemsSource = genres;
+
+            if (genres.Contains(selectedGenre))
+                CmbGenre.SelectedItem = selectedGenre;
+            else
+                CmbGenre.SelectedIndex = 0;
+        }
+
     }
 }
 
